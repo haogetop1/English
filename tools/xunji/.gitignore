@@ -1,0 +1,11 @@
+.toolchain/
+.cache/
+.work/
+.tmp/
+artifacts/
+android/.gradle/
+android/.kotlin/
+**/build/
+android/local.properties
+*.keystore
+*.jks
