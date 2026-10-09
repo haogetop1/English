@@ -17,7 +17,7 @@ if [[ -z "${XUNJI_ENV_INITIALIZED+x}" ]]; then
   export XUNJI_BASE_JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-}"
   export XUNJI_ENV_INITIALIZED=1
 fi
-export JAVA_TOOL_OPTIONS="$XUNJI_BASE_JAVA_TOOL_OPTIONS -Duser.home=$XUNJI_ROOT/.cache/java-home"
+export JAVA_TOOL_OPTIONS="$XUNJI_BASE_JAVA_TOOL_OPTIONS -Duser.home=$XUNJI_ROOT/.cache/java-home -Djava.io.tmpdir=$TMPDIR"
 if [[ -n "${HTTPS_PROXY:-${https_proxy:-}}" ]]; then
   read -r XUNJI_PROXY_HOST XUNJI_PROXY_PORT < <(python3 - <<'PY'
 import os, urllib.parse
