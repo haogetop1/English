@@ -34,12 +34,12 @@ import com.xunji.flashcards.ui.components.*
    FlowRow(horizontalArrangement=Arrangement.spacedBy(10.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) { ThemeMode.entries.forEach { mode->FilterChip(selected=state.settings.themeMode==mode,onClick={viewModel.saveSettings(state.settings.copy(themeMode=mode))},enabled=!state.busy,label={Text(when(mode){ThemeMode.SYSTEM->"跟随系统";ThemeMode.LIGHT->"浅色";ThemeMode.DARK->"深色"})},modifier=Modifier.heightIn(min=48.dp).testTag("theme-${mode.name.lowercase()}")) } }
   } }
   item { Paper(Modifier.fillMaxWidth()) {
-   Text("把记忆好好保存",style=MaterialTheme.typography.titleLarge);Notice("导出寻记 JSON 备份，包含卡片、复习进度和设置。请将重要备份保存在可靠的位置。")
+   Text("把记忆好好保存",style=MaterialTheme.typography.titleLarge);Notice("导出循记 JSON 备份，包含卡片、复习进度和设置。请将重要备份保存在可靠的位置。")
    PrimaryButton(if(state.busy)"正在处理…" else "导出备份",onExport,enabled=!state.busy,tag="export-backup")
    OutlinedButton(onImport,Modifier.fillMaxWidth().heightIn(min=56.dp).testTag("import-backup"),enabled=!state.busy,shape=RoundedCornerShape(18.dp)) { Text("从备份恢复") }
-   Notice("恢复会替换当前全部数据。仅支持寻记备份格式。")
+   Notice("恢复会替换当前全部数据。仅支持循记备份格式。")
   } }
-  item { Eyebrow("寻记 0.1.0");Spacer(Modifier.height(8.dp));Notice("独立、离线、本地保存。\n给知识一点时间，也给自己一点空间。") }
+  item { Eyebrow("循记 0.1.0");Spacer(Modifier.height(8.dp));Notice("独立、离线、本地保存。\n给知识一点时间，也给自己一点空间。") }
  }
  val prepared=state.prepared
  if(prepared!=null)AlertDialog(onDismissRequest=viewModel::cancelRestore,title={Text("替换当前全部数据？")},text={Column(verticalArrangement=Arrangement.spacedBy(12.dp)) { Text("备份包含 ${prepared.deckCount} 个牌组、${prepared.cardCount} 张卡片、${prepared.logCount} 条评分记录。");Text("当前牌组、卡片和记录将被替换，无法撤回。建议先导出当前数据。");if(state.error!=null)Notice(state.error,true) }},confirmButton={TextButton(viewModel::confirmRestore,enabled=!state.busy,modifier=Modifier.testTag("restore-confirm")) {Text(if(state.busy)"恢复中…" else "确认替换",color=MaterialTheme.colorScheme.error)}},dismissButton={TextButton(viewModel::cancelRestore,enabled=!state.busy,modifier=Modifier.testTag("restore-cancel")) {Text("取消")} })

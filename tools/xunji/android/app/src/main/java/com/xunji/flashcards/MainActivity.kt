@@ -19,7 +19,7 @@ class MainActivity:ComponentActivity() {
         setContent {
             var retry by remember { mutableIntStateOf(0) }
             val container=remember(retry) { runCatching {(application as XunjiApplication).container} }
-            container.getOrNull()?.let {XunjiApp(it)} ?: XunjiTheme { Surface(Modifier.fillMaxSize()) { Box(Modifier.statusBarsPadding().padding(22.dp)) { EmptyState("暂时无法打开寻记","你的数据会保留。请重试，或稍后重新打开应用。","重试",{retry++}) } } }
+            container.getOrNull()?.let {XunjiApp(it)} ?: XunjiTheme { Surface(Modifier.fillMaxSize()) { Box(Modifier.statusBarsPadding().padding(22.dp)) { EmptyState("暂时无法打开循记","你的数据会保留。请重试，或稍后重新打开应用。","重试",{retry++}) } } }
         }
     }
 }

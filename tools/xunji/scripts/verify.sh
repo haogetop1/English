@@ -16,6 +16,7 @@ from pathlib import Path
 import sys
 root=Path(sys.argv[1]);badging=(root/'artifacts/test-results/package.txt').read_text();permissions=(root/'artifacts/test-results/permissions.txt').read_text()
 assert "name='com.xunji.flashcards.debug'" in badging
+assert "application-label:'循记'" in badging
 assert "sdkVersion:'26'" in badging
 assert "targetSdkVersion:'36'" in badging
 for forbidden in ['android.permission.INTERNET','READ_EXTERNAL_STORAGE','WRITE_EXTERNAL_STORAGE','MANAGE_EXTERNAL_STORAGE']:

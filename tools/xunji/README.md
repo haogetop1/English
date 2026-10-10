@@ -1,12 +1,12 @@
-# 寻记 · Xunji
+# 循记 · Xunji
 
 一款离线 Android 闪卡应用：自己制卡，用 FSRS 安排复习，将进度保存在手机本地。中文原生 Compose 界面，暖白与森林绿配色，支持深色主题。
 
 ## 安装与第一次学习
 
-最低 Android 8.0 / API 26。开发验证包在 `artifacts/xunji-0.1.0-debug.apk`；它使用独立包名 `com.xunji.flashcards.debug` 和 debug 签名，未发布到应用商店。
+最低 Android 8.0 / API 26。安装包下载入口：[GitHub Releases](https://github.com/haogetop1/English/releases)。本地构建产物在 `artifacts/xunji-0.1.0-debug.apk`；它使用独立包名 `com.xunji.flashcards.debug` 和 debug 签名，未发布到应用商店。
 
-允许手机安装该来源的 APK 后打开寻记：
+允许手机安装该来源的 APK 后打开循记：
 
 1. 在「牌组」新建一个牌组，例如「雅思词汇」。
 2. 点新增卡片，正面填词汇或问题，背面填释义或答案，例句可选。
@@ -31,7 +31,7 @@
 
 恢复前先读取并校验文件，再显示数量与替换确认。**确认后替换当前全部数据，不合并，无法撤回。** 建议先导出当前数据。读取或写入失败不会清空已有数据；文件上限 50 MiB。
 
-第一版独立使用，只支持寻记自己的格式，暂不支持 Anki `.apkg` 或 AnkiWeb。应用无联网或广泛存储权限。
+第一版独立使用，只支持循记自己的格式，暂不支持 Anki `.apkg` 或 AnkiWeb。应用无联网或广泛存储权限。
 
 ## 构建与验证
 
@@ -64,4 +64,4 @@ cd android
 - `artifacts`：生成的 APK、报告和截图，忽略 Git。
 - [正式设计](docs/superpowers/specs/2026-10-09-xunji-flashcards-design.md) / [实施计划](docs/superpowers/plans/2026-10-09-xunji-flashcards.md) / [第三方声明](THIRD_PARTY_NOTICES.md)。
 
-所有实现留在 `tools/xunji`；没有推送或发布。空数据库不插入示例，测试在独立测试环境执行。
+所有实现留在 `tools/xunji`。空数据库不插入示例，测试在独立测试环境执行。

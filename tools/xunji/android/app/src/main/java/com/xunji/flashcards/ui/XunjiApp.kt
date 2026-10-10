@@ -54,7 +54,7 @@ private fun Context.activity():Activity?=when(this) { is Activity->this;is Conte
   val dark=MaterialTheme.colorScheme.background.red<.3f
   SideEffect { context.activity()?.window?.let { window->WindowCompat.getInsetsController(window,window.decorView).apply { isAppearanceLightStatusBars=!dark;isAppearanceLightNavigationBars=!dark } } }
   Scaffold(containerColor=MaterialTheme.colorScheme.background,topBar={ if(!focused && !unavailable)Row(Modifier.fillMaxWidth().statusBarsPadding().padding(10.dp,6.dp),verticalAlignment=Alignment.CenterVertically) {
-   if(root) { Spacer(Modifier.width(12.dp));Mark();Spacer(Modifier.width(12.dp));Text("寻记",style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f)) }
+   if(root) { Spacer(Modifier.width(12.dp));Mark();Spacer(Modifier.width(12.dp));Text("循记",style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f)) }
    else { IconAction("back","返回",{nav.popBackStack()},"page-back");Text(if(route=="Settings")"设置" else "牌组",style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f)) }
    if(route!="Settings")IconAction("settings","设置",{nav.navigate("Settings")},"open-settings")
   } },bottomBar={ if(root && !unavailable)NavigationBar(containerColor=MaterialTheme.colorScheme.background,tonalElevation=0.dp) {
@@ -84,7 +84,7 @@ private fun Context.activity():Activity?=when(this) { is Activity->this;is Conte
      BackHandler {if(reviewState !is ReviewUiState.Submitting)exit()}
      ReviewScreen(reviewState,undoable,review::reveal,review::grade,review::undo,review::refresh,exit)
     }
-    composable("Settings") {SettingsScreen(settingsState,settings,{export.launch("寻记-${LocalDate.now()}.xunji.json")},{restore.launch(arrayOf("application/json","text/*","application/octet-stream"))})}
+    composable("Settings") {SettingsScreen(settingsState,settings,{export.launch("循记-${LocalDate.now()}.xunji.json")},{restore.launch(arrayOf("application/json","text/*","application/octet-stream"))})}
    }
   }
  }

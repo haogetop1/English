@@ -1,6 +1,6 @@
 # 真机验收
 
-APK：`artifacts/xunji-0.1.0-debug.apk`。最低 Android 8 / API 26；debug 签名。建议先在测试设备安装，备份已有寻记数据。
+APK：`artifacts/xunji-0.1.0-debug.apk`。最低 Android 8 / API 26；debug 签名。建议先在测试设备安装，备份已有循记数据。
 
 1. 安装并打开，首次无演示数据；「牌组」创建「雅思词汇」。
 2. 新建卡：正面 resilient，背面「有韧性的」，例句 Be resilient.；必填为空应保留输入并提示。

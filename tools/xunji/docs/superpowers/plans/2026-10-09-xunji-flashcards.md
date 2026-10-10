@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 交付离线 Android 闪卡应用“寻记”，支持制卡、FSRS 复习、统计和完整本地备份。
+**Goal:** 交付离线 Android 闪卡应用“循记”，支持制卡、FSRS 复习、统计和完整本地备份。
 
 **Architecture:** `core` 是不依赖 Android 的 Kotlin/JVM 模块，负责模型、调度、队列、输入与备份验证。`app` 使用 Room、事务业务操作和 Compose，通过 ViewModel 展示可观察状态；调度器不直接写数据库。
 
@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - 工作目录 `/workspace/English/tools/xunji`；所有新增源码、下载、缓存、构建输出与文档留在该目录；不新建 worktree、不推送、不上架。
-- Android 最低 API 26；compileSdk=36、targetSdk=36；源码目标 Java 17；应用名称“寻记”。
+- Android 最低 API 26；compileSdk=36、targetSdk=36；源码目标 Java 17；应用名称“循记”。
 - 正式 applicationId/namespace=`com.xunji.flashcards`；debug 后缀 `.debug`；versionCode=1、versionName=`0.1.0`。
 - 不申请 INTERNET、MANAGE_EXTERNAL_STORAGE 或共享存储读写权限；文件选择使用 SAF。
 - 本地 Room schemaVersion=1；禁止破坏性数据库迁移；业务 ID 为 UUID 字符串，时间为 UTC epoch milliseconds。
