@@ -27,6 +27,7 @@ class ReviewViewModel(private val repository:StudyRepository,private val actions
     private var job:Job?=null
     private var generation=0
     fun start(deckId:String?) {
+        if(active && this.deckId==deckId)return
         finish();active=true;this.deckId=deckId;sessionId=UUID.randomUUID().toString();handle["sessionId"]=sessionId;loadNext()
     }
     private fun launchOperation(block:suspend ()->Unit) {
@@ -105,6 +106,7 @@ class ReviewViewModel(private val repository:StudyRepository,private val actions
         foreground=active
         if(active) { if(this.active) { if(pending==null)timer.resume(monotonic());refresh() } } else timer.pause(monotonic())
     }
+    override fun onCleared() { finish();super.onCleared() }
     fun finish() {
         generation++;active=false;job?.cancel();job=null;current=null;pending=null;lastLog=null;undoable.value=false;timer.reset();handle["revealed"]=false
         mutable.value=ReviewUiState.Complete(null,0,0,0)

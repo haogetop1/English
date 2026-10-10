@@ -4,6 +4,7 @@ import androidx.lifecycle.*
 import com.xunji.core.model.*
 import com.xunji.core.stats.StudyStatistics
 import com.xunji.core.study.NewCardQuota
+import com.xunji.core.time.LocalDay
 import com.xunji.core.validation.FieldValidationException
 import com.xunji.flashcards.data.StudyRepository
 import java.time.*
@@ -18,9 +19,11 @@ class MainViewModel(private val repo:StudyRepository,private val clock:Clock=Clo
         viewModelScope.launch {
             combine(repo.observeDecks(),repo.observeAllCards(),repo.observeLogs(),repo.observeSettings(),moment) { decks,cards,logs,settings,time ->
                 val(at,zone)=time
+                val day=LocalDay.bounds(at,zone)
+                val learned=cards.count {it.schedule.firstReviewedAt?.let { first->first>=day.start && first<day.endExclusive }==true}
                 val remaining=NewCardQuota.remaining(cards.map { it.schedule },settings,at,zone)
                 fun due(c:CardCandidate)=c.schedule.phase!=Phase.NEW && c.schedule.dueAt<=at.toEpochMilli()
-                MainUiState(loading=false,decks=decks.map { deck -> val subset=cards.filter { it.card.deckId==deck.id };DeckSummary(deck,subset.size,subset.count(::due),subset.count { it.schedule.phase==Phase.NEW }) },cards=cards,due=cards.count(::due),availableNew=minOf(remaining,cards.count { it.schedule.phase==Phase.NEW }),learnedNew=settings.newCardsPerDay-remaining,statistics=StudyStatistics.summarize(logs,at,zone),settings=settings)
+                MainUiState(loading=false,decks=decks.map { deck -> val subset=cards.filter { it.card.deckId==deck.id };DeckSummary(deck,subset.size,subset.count(::due),subset.count { it.schedule.phase==Phase.NEW }) },cards=cards,due=cards.count(::due),availableNew=minOf(remaining,cards.count { it.schedule.phase==Phase.NEW }),learnedNew=learned,statistics=StudyStatistics.summarize(logs,at,zone),settings=settings)
             }.catch { emit(MainUiState(loading=false,error="无法读取数据，请重启应用后重试")) }.collect { mutable.value=it }
         }
     }

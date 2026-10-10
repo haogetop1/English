@@ -7,6 +7,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.ZoneOffset
+import com.xunji.core.model.*
+import com.xunji.flashcards.study.*
+import java.util.UUID
 @RunWith(RobolectricTestRunner::class) @Config(sdk=[28])
 class MainViewModelTest:UiTestBase() {
  @Test fun reflectsCardsQuotaAndContentUpdates()=runBlocking {
@@ -14,5 +17,12 @@ class MainViewModelTest:UiTestBase() {
   val s=withTimeout(5000) { v.state.first { !it.loading } };assertEquals(1,s.availableNew);assertEquals(0,s.due)
   repo.saveCard(card.id,deck.id,"updated","词","")
   withTimeout(5000) { v.state.first { it.cards.single().card.front=="updated" } };Unit
+ }
+ @Test fun actualLearnedCountSurvivesQuotaReduction()=runBlocking {
+  service.grade(GradeCommand(UUID.randomUUID().toString(),UUID.randomUUID().toString(),card.id,0,Rating.EASY,1000))
+  repo.saveSettings(AppSettings(0))
+  val v=MainViewModel(repo,clock);v.refresh(clock.instant(),ZoneOffset.UTC)
+  val s=withTimeout(5000) {v.state.first { !it.loading }}
+  assertEquals(0,s.availableNew);assertEquals(1,s.learnedNew)
  }
 }
