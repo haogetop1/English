@@ -15,7 +15,7 @@ parser.add_argument('--port',type=int,default=5555)
 parser.add_argument('action',choices=['shell','install','instrument','screenshot'])
 parser.add_argument('argument',nargs='?')
 args=parser.parse_args()
-device=AdbDeviceTcp('127.0.0.1',args.port,default_transport_timeout_s=30)
+device=AdbDeviceTcp('127.0.0.1',args.port,default_transport_timeout_s=180)
 device.connect(read_timeout_s=30,auth_timeout_s=30)
 try:
     if args.action=='shell':
