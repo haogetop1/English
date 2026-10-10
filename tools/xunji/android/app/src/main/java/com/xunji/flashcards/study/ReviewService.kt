@@ -8,8 +8,8 @@ import androidx.room.withTransaction
 import java.time.Clock
 import java.time.ZoneId
 
-class ReviewService(private val db:XunjiDatabase,private val scheduler:Scheduler,private val clock:Clock=Clock.systemUTC(),private val zone:()->ZoneId={ZoneId.systemDefault()}) {
-    suspend fun grade(command:GradeCommand):GradeResult=db.withTransaction {
+class ReviewService(private val db:XunjiDatabase,private val scheduler:Scheduler,private val clock:Clock=Clock.systemUTC(),private val zone:()->ZoneId={ZoneId.systemDefault()}):ReviewActions {
+    override suspend fun grade(command:GradeCommand):GradeResult=db.withTransaction {
         val dao=db.dao()
         if(command.operationId.isBlank() || command.sessionId.isBlank() || command.durationMs !in 0..300_000 || command.expectedRevision<0) return@withTransaction GradeResult.InvalidCommand
         dao.log(command.operationId)?.toModel()?.let { previous ->
@@ -26,7 +26,7 @@ class ReviewService(private val db:XunjiDatabase,private val scheduler:Scheduler
         dao.insertLog(log.toEntity())
         GradeResult.Recorded(log)
     }
-    suspend fun undo(sessionId:String,logId:String):UndoResult=db.withTransaction {
+    override suspend fun undo(sessionId:String,logId:String):UndoResult=db.withTransaction {
         val dao=db.dao()
         val log=dao.latestSessionLog(sessionId)?.toModel() ?: return@withTransaction UndoResult.Unavailable
         if(log.id!=logId || log.undoneAt!=null) return@withTransaction UndoResult.Unavailable

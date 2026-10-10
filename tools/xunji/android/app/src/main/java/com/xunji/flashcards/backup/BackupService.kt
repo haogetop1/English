@@ -12,7 +12,7 @@ import java.time.Clock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-data class PreparedBackup internal constructor(val document:BackupDocument) {
+class PreparedBackup internal constructor(val document:BackupDocument) {
     val deckCount get()=document.decks.size
     val cardCount get()=document.cards.size
     val logCount get()=document.reviewLogs.size

@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface StudyRepository {
     fun observeDecks():Flow<List<Deck>>
+    fun observeAllCards():Flow<List<CardCandidate>>
     fun observeCards(deckId:String):Flow<List<CardCandidate>>
     fun observeSchedules():Flow<List<CardSchedule>>
     fun observeLogs():Flow<List<ReviewLog>>

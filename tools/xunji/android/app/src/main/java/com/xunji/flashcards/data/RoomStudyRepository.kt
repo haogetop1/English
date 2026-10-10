@@ -9,6 +9,7 @@ import java.util.UUID
 
 class RoomStudyRepository(private val db:XunjiDatabase,private val clock:Clock=Clock.systemUTC(),private val idFactory:()->String={UUID.randomUUID().toString()}):StudyRepository {
     private val dao=db.dao()
+    override fun observeAllCards()=dao.watchCandidates(null).map { rows -> rows.map { it.toModel() } }
     override fun observeDecks()=dao.watchDecks().map { rows -> rows.map { it.toModel() } }
     override fun observeCards(deckId:String)=dao.watchCandidates(deckId).map { rows -> rows.map { it.toModel() } }
     override fun observeSchedules()=dao.watchSchedules().map { rows -> rows.map { it.toModel() } }
