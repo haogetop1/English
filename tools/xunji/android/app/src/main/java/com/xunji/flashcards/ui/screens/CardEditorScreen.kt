@@ -4,16 +4,21 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.xunji.flashcards.ui.*
 import com.xunji.flashcards.ui.components.*
 
 @Composable fun CardEditorScreen(state:EditorUiState,viewModel:EditorViewModel,editing:Boolean,onExit:()->Unit) {
+ val focus=LocalFocusManager.current
  var discard by rememberSaveable { mutableStateOf(false) }
  val requestExit={ if(!state.saving){ if(state.dirty)discard=true else onExit() };Unit }
  BackHandler(onBack=requestExit)
@@ -28,13 +33,17 @@ import com.xunji.flashcards.ui.components.*
    EditorField("例句 · 可选","给这个知识点一个上下文",state.example,{viewModel.update("example",it)},state.errors["example"],"editor-example",!state.saving)
    if(state.error!=null)Notice(state.error,true)
   }
-  Box(Modifier.padding(22.dp,12.dp,22.dp,20.dp)) { PrimaryButton(if(state.saving)"正在保存…" else "保存卡片",viewModel::save,enabled=!state.saving && !state.loading,tag="save-card") }
+  Box(Modifier.padding(22.dp,12.dp,22.dp,20.dp)) { PrimaryButton(if(state.saving)"正在保存…" else "保存卡片",{focus.clearFocus();viewModel.save()},enabled=!state.saving && !state.loading,tag="save-card") }
  }
  if(discard)AlertDialog(onDismissRequest={discard=false},title={Text("放弃未保存的修改？")},text={Text("当前内容还没有保存到卡片。")},confirmButton={TextButton({discard=false;onExit()}) {Text("放弃修改",color=MaterialTheme.colorScheme.error)}},dismissButton={TextButton({discard=false}) {Text("继续编辑")} })
 }
 @Composable private fun EditorField(label:String,placeholder:String,value:String,onChange:(String)->Unit,error:String?,tag:String,enabled:Boolean) {
+ val errorView=remember { BringIntoViewRequester() }
+ val keyboardHeight=WindowInsets.ime.getBottom(LocalDensity.current)
+ // Native keyboard animation can resize the viewport after the first error layout.
+ LaunchedEffect(error,keyboardHeight) {if(error!=null) {withFrameNanos {};errorView.bringIntoView()}}
  Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
   Text(label,style=MaterialTheme.typography.titleMedium)
-  OutlinedTextField(value,onChange,modifier=Modifier.fillMaxWidth().testTag(tag),placeholder={Text(placeholder)},minLines=3,maxLines=8,enabled=enabled,isError=error!=null,shape=RoundedCornerShape(18.dp),supportingText={if(error!=null)Text(error)})
+  OutlinedTextField(value,onChange,modifier=Modifier.fillMaxWidth().testTag(tag),placeholder={Text(placeholder)},minLines=3,maxLines=8,enabled=enabled,isError=error!=null,shape=RoundedCornerShape(18.dp),supportingText={if(error!=null)Text(error,Modifier.bringIntoViewRequester(errorView))})
  }
 }

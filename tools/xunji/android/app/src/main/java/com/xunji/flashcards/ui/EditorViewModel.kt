@@ -13,15 +13,20 @@ class EditorViewModel(private val repo:StudyRepository,private val deckId:String
         if(cardId!=null)viewModelScope.launch {
             try {
                 val card=repo.candidates(deckId).first { it.card.id==cardId }.card
-                if(!mutable.value.dirty)mutable.value=mutable.value.copy(front=card.front,back=card.back,example=card.example)
-                mutable.value=mutable.value.copy(loading=false)
+                // SavedStateHandle can contain only changed fields from an older draft.
+                // Merge each field separately, then persist the complete draft.
+                mutable.value=mutable.value.copy(front=handle["front"]?:card.front,back=handle["back"]?:card.back,example=handle["example"]?:card.example,loading=false)
+                persistDraft(mutable.value)
             } catch(e:CancellationException) { throw e } catch(_:Exception) { mutable.value=mutable.value.copy(loading=false,error="卡片无法读取，请返回重试") }
         }
     }
+    private fun persistDraft(draft:EditorUiState) {
+        handle["front"]=draft.front;handle["back"]=draft.back;handle["example"]=draft.example;handle["dirty"]=draft.dirty
+    }
     fun update(field:String,value:String) {
         if(mutable.value.saving || mutable.value.loading || mutable.value.saved)return
-        handle[field]=value;handle["dirty"]=true
         mutable.value=when(field) { "front"->mutable.value.copy(front=value);"back"->mutable.value.copy(back=value);else->mutable.value.copy(example=value) }.copy(dirty=true,errors=emptyMap(),error=null)
+        persistDraft(mutable.value)
     }
     fun save() {
         val s=mutable.value;if(s.saving || s.saved || s.loading)return

@@ -48,18 +48,23 @@ private fun Context.activity():Activity?=when(this) { is Activity->this;is Conte
  val restore=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri->if(uri!=null)settings.prepareRestore(uri) }
  val root=route in listOf("Today","Decks","Statistics")
  val focused=route.startsWith("Editor") || route.startsWith("Review")
+ val unavailable=state.error!=null || settingsState.initializationError!=null
  fun navigateRoot(destination:String) { nav.navigate(destination) { popUpTo("Today") { saveState=true };launchSingleTop=true;restoreState=true } }
  XunjiTheme(state.settings.themeMode) {
   val dark=MaterialTheme.colorScheme.background.red<.3f
   SideEffect { context.activity()?.window?.let { window->WindowCompat.getInsetsController(window,window.decorView).apply { isAppearanceLightStatusBars=!dark;isAppearanceLightNavigationBars=!dark } } }
-  Scaffold(containerColor=MaterialTheme.colorScheme.background,topBar={ if(!focused)Row(Modifier.fillMaxWidth().statusBarsPadding().padding(10.dp,6.dp),verticalAlignment=Alignment.CenterVertically) {
+  Scaffold(containerColor=MaterialTheme.colorScheme.background,topBar={ if(!focused && !unavailable)Row(Modifier.fillMaxWidth().statusBarsPadding().padding(10.dp,6.dp),verticalAlignment=Alignment.CenterVertically) {
    if(root) { Spacer(Modifier.width(12.dp));Mark();Spacer(Modifier.width(12.dp));Text("寻记",style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f)) }
    else { IconAction("back","返回",{nav.popBackStack()},"page-back");Text(if(route=="Settings")"设置" else "牌组",style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f)) }
    if(route!="Settings")IconAction("settings","设置",{nav.navigate("Settings")},"open-settings")
-  } },bottomBar={ if(root)NavigationBar(containerColor=MaterialTheme.colorScheme.background,tonalElevation=0.dp) {
+  } },bottomBar={ if(root && !unavailable)NavigationBar(containerColor=MaterialTheme.colorScheme.background,tonalElevation=0.dp) {
    listOf(Triple("Today","今日","today"),Triple("Decks","牌组","decks"),Triple("Statistics","记录","stats")).forEach { (destination,label,icon)->NavigationBarItem(selected=route==destination,onClick={navigateRoot(destination)},icon={Glyph(icon,color=if(route==destination)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)},label={Text(label)},modifier=Modifier.testTag("nav-$icon"),colors=NavigationBarItemDefaults.colors(indicatorColor=MaterialTheme.colorScheme.primaryContainer)) }
   } }) { padding->
-   NavHost(nav,startDestination="Today",modifier=Modifier.padding(padding).then(if(focused)Modifier.statusBarsPadding().navigationBarsPadding() else Modifier),enterTransition={fadeIn(tween(200))},exitTransition={fadeOut(tween(180))}) {
+   if(unavailable) {
+    Box(Modifier.fillMaxSize().padding(padding).padding(22.dp),contentAlignment=Alignment.Center) {
+     EmptyState("暂时无法读取数据",settingsState.initializationError ?: state.error.orEmpty(),"重新读取",{main.retryObservation();settings.retryObservation()})
+    }
+   } else NavHost(nav,startDestination="Today",modifier=Modifier.padding(padding).then(if(focused)Modifier.statusBarsPadding().navigationBarsPadding() else Modifier),enterTransition={fadeIn(tween(200))},exitTransition={fadeOut(tween(180))}) {
     composable("Today") { TodayScreen(state,{nav.navigate("Review/all")},{navigateRoot("Decks")}) }
     composable("Decks") { DecksScreen(state,main) {nav.navigate("DeckDetail/$it")} }
     composable("Statistics") { StatisticsScreen(state) }

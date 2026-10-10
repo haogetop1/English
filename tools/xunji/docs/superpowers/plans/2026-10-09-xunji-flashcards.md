@@ -8,7 +8,7 @@
 
 **Tech Stack:** Kotlin 2.2.20、Compose、Material 3、Room 2.8.1、Coroutines、java-fsrs 1.0.0、Gradle 8.13、AGP 8.13.2。
 
-**Spec:** [已确认的正式设计](../specs/2026-10-09-xunji-flashcards-design.md)。实现前同时阅读设计与本文。日期：2026-10-09；计划待用户审阅，所有任务尚未执行。
+**Spec:** [已确认的正式设计](../specs/2026-10-09-xunji-flashcards-design.md)。实现前同时阅读设计与本文。日期：2026-10-09；用户已确认设计与计划，选择当前代理直接执行。当前结果见 [验证报告](../../testing/verification-report.md)，API 35 与真机项目未验证。
 
 ## Global Constraints
 
@@ -58,7 +58,7 @@
 | JVM 测试 | JUnit 4.13.2；Robolectric 4.16（Room JVM 测试使用 API 28） |
 | Android 测试 | runner 1.6.2、androidx.test.ext:junit 1.2.1，Compose 测试使用 BOM |
 
-已读取官方 Maven POM 确认主要依赖存在，尚未实际安装或验证版本组合。若实测发现工具兼容问题，只调整必要的固定版本，记录原因与验证结果，不关闭 TLS/校验或改写预期校验值。
+固定版本组合已实际安装、构建并通过 JVM 与 API 26 验证。若实测发现工具兼容问题，只调整必要的固定版本，记录原因与验证结果，不关闭 TLS/校验或改写预期校验值。
 
 JDK 从 `github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/` 获取；Gradle 从 `services.gradle.org/distributions/` 获取；SDK 从 `dl.google.com/android/repository/` 获取；依赖使用 Google Maven 与 Maven Central。优先复用已存在且验证有效的安装，不覆盖用户工具。
 
@@ -88,9 +88,9 @@ JDK 从 `github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%
 
 **Interfaces:** Consumes 固定版本表；Produces 可运行的 Gradle 工程和项目内环境初始化；本任务不定义产品业务接口。
 
-- [ ] **Step 1:** 编写并执行 setup-toolchain.sh：检查已安装版本→下载必要归档→验证 checksum→解压至 `.toolchain/`；安装 SDK 36/build-tools 36.0.0。脚本非交互，SDK 许可通过 sdkmanager 的标准接口接受，保留其命令退出状态。env.sh 根据自身绝对位置导出 JAVA_HOME、ANDROID_HOME、ANDROID_SDK_ROOT、GRADLE_USER_HOME、ANDROID_USER_HOME、TMPDIR，均指向 xunji 内；不改 HOME 或用户全局配置。
-- [ ] **Step 2:** 用经校验的 Gradle 生成 Wrapper，填写固定 checksum；建立 core/app 模块与依赖目录，Gradle workers 最大 4、堆最大 4 GiB；创建无联网权限的最小 Activity，配置 debug 签名文件位于项目缓存内。验证 `javac -version`、`sdkmanager --list_installed`、`./gradlew --version`。
-- [ ] **Step 3:** 为 raw java-fsrs 写测试 `newCardAgainUsesOneMinute` 和 `newCardGoodUsesTenMinutes`：关闭 fuzzing，固定 Instant，调用 reviewCard，断言 due 分别等于 now+60 秒和 now+600 秒、产生对应 rating 日志且原 Card 未被修改。添加设备版本相同断言，实际运行才能证明 record/java.time 在 Android 上可用。
+- [x] **Step 1:** 编写并执行 setup-toolchain.sh：检查已安装版本→下载必要归档→验证 checksum→解压至 `.toolchain/`；安装 SDK 36/build-tools 36.0.0。脚本非交互，SDK 许可通过 sdkmanager 的标准接口接受，保留其命令退出状态。env.sh 根据自身绝对位置导出 JAVA_HOME、ANDROID_HOME、ANDROID_SDK_ROOT、GRADLE_USER_HOME、ANDROID_USER_HOME、TMPDIR，均指向 xunji 内；不改 HOME 或用户全局配置。
+- [x] **Step 2:** 用经校验的 Gradle 生成 Wrapper，填写固定 checksum；建立 core/app 模块与依赖目录，Gradle workers 最大 4、堆最大 4 GiB；创建无联网权限的最小 Activity，配置 debug 签名文件位于项目缓存内。验证 `javac -version`、`sdkmanager --list_installed`、`./gradlew --version`。
+- [x] **Step 3:** 为 raw java-fsrs 写测试 `newCardAgainUsesOneMinute` 和 `newCardGoodUsesTenMinutes`：关闭 fuzzing，固定 Instant，调用 reviewCard，断言 due 分别等于 now+60 秒和 now+600 秒、产生对应 rating 日志且原 Card 未被修改。添加设备版本相同断言，实际运行才能证明 record/java.time 在 Android 上可用。
 
 ```kotlin
 assertEquals(at.plusSeconds(60), again.card().due)
@@ -98,9 +98,9 @@ assertEquals(at.plusSeconds(600), good.card().due)
 assertEquals(Rating.GOOD, good.reviewLog().rating())
 ```
 
-- [ ] **Step 4:** Run `source scripts/env.sh` 后在 android 执行 `./gradlew :core:test :app:assembleDebug --console=plain`；期望有效测试计数>0、无失败并生成 APK。工具配置没有业务红绿循环；不能把首次成功构建描述为所有产品功能已通过。
+- [x] **Step 4:** Run `source scripts/env.sh` 后在 android 执行 `./gradlew :core:test :app:assembleDebug --console=plain`；期望有效测试计数>0、无失败并生成 APK。工具配置没有业务红绿循环；不能把首次成功构建描述为所有产品功能已通过。
 - [ ] **Step 5:** 用 SDK 稳定 channel 的 emulator 和 API 35 AOSP x86_64 system image，在 `.toolchain/` 内建 AVD。没有 KVM 时尝试 `-no-accel -gpu swiftshader_indirect -no-window -no-audio -no-snapshot`；等待启动最多 10 分钟，按最长 30 秒输出检查循环、期间保持进度更新。启动后运行 `./gradlew :app:connectedDebugAndroidTest --console=plain`，记录具体版本和结果；失败需诊断，设备未运行必须标记 unrun，不用 JVM 结果替代。
-- [ ] **Step 6:** 更新 README 工具初始化与验证步骤，提交本任务的工程、脚本及兼容测试，不提交工具链、缓存、私有签名或 APK。
+- [x] **Step 6:** 更新 README 工具初始化与验证步骤，提交本任务的工程、脚本及兼容测试，不提交工具链、缓存、私有签名或 APK。
 
 ### Task 2: 领域模型、FSRS 适配、队列和输入规则
 
@@ -116,7 +116,7 @@ assertEquals(Rating.GOOD, good.reviewLog().rating())
 - Produces `NewCardQuota.remaining(allSchedules:List<CardSchedule>,settings:AppSettings,at:Instant,zone:ZoneId):Int` 和 `LocalDay.bounds(at:Instant,zone:ZoneId):DayBounds(start:Long,endExclusive:Long)`。
 - Produces `InputValidator.deckName(raw:String):String`、`cardContent(front:String,back:String,example:String):Unit`；失败抛 FieldValidationException(field:String,message:String)。
 
-- [ ] **Step 1:** 写失败测试：NEW/AGAIN due=at+60,000；NEW/GOOD due=at+600,000；REVIEW/AGAIN→RELEARNING；preview 四项等于同时间独立 review 结果且输入未变化。review 更新 firstReviewedAt、lastReviewAt 和 revision+1；早于 lastReviewAt 的评分拒绝，不制造负间隔。
+- [x] **Step 1:** 写失败测试：NEW/AGAIN due=at+60,000；NEW/GOOD due=at+600,000；REVIEW/AGAIN→RELEARNING；preview 四项等于同时间独立 review 结果且输入未变化。review 更新 firstReviewedAt、lastReviewAt 和 revision+1；早于 lastReviewAt 的评分拒绝，不制造负间隔。
 
 ```kotlin
 assertEquals(at.toEpochMilli() + 600_000, good.dueAt)
@@ -125,10 +125,10 @@ assertEquals(original.revision + 1, good.revision)
 assertEquals(scheduler.review(original, Rating.GOOD, at), preview.getValue(Rating.GOOD))
 ```
 
-- [ ] **Step 2:** 补队列和额度测试：到期学习优先于 REVIEW，NEW 不计到期；额度=0 仍返回到期卡；无可学但有未来学习卡返回 Waiting；全牌组计数；Asia/Shanghai 午夜额度重置，America/New_York 夏令时日界线不按固定 24 小时计算。
-- [ ] **Step 3:** 补输入测试：空白字段拒绝；牌组名 trim；正面/背面内容保留换行；80/2,000/10,000/4,000 code point 边界通过，超出 1 拒绝；含 emoji 的正面长度按 code point 计算。
-- [ ] **Step 4:** Run `./gradlew :core:test --console=plain`，确认因缺失接口或行为而失败；实现上述精确接口，显式映射库 LEARNING/REVIEW/RELEARNING 与应用 NEW，不使用库默认 cardId 当 UUID；映射临时库 cardId=0，忽略库日志业务 ID。
-- [ ] **Step 5:** 再运行相同测试，期望所有上述测试执行且通过；记录计数，提交模型和核心逻辑。
+- [x] **Step 2:** 补队列和额度测试：到期学习优先于 REVIEW，NEW 不计到期；额度=0 仍返回到期卡；无可学但有未来学习卡返回 Waiting；全牌组计数；Asia/Shanghai 午夜额度重置，America/New_York 夏令时日界线不按固定 24 小时计算。
+- [x] **Step 3:** 补输入测试：空白字段拒绝；牌组名 trim；正面/背面内容保留换行；80/2,000/10,000/4,000 code point 边界通过，超出 1 拒绝；含 emoji 的正面长度按 code point 计算。
+- [x] **Step 4:** Run `./gradlew :core:test --console=plain`，确认因缺失接口或行为而失败；实现上述精确接口，显式映射库 LEARNING/REVIEW/RELEARNING 与应用 NEW，不使用库默认 cardId 当 UUID；映射临时库 cardId=0，忽略库日志业务 ID。
+- [x] **Step 5:** 再运行相同测试，期望所有上述测试执行且通过；记录计数，提交模型和核心逻辑。
 
 ### Task 3: Room 持久化和牌组/卡片 CRUD
 
@@ -143,7 +143,7 @@ assertEquals(scheduler.review(original, Rating.GOOD, at), preview.getValue(Ratin
 - Produces suspend `createDeck(name:String):Deck`、`renameDeck(id:String,name:String):Unit`、`deleteDeck(id:String):Unit`、`saveCard(id:String?,deckId:String,front:String,back:String,example:String):Flashcard`、`deleteCard(id:String):Unit`、`candidates(deckId:String?):List<CardCandidate>`、`saveSettings(settings:AppSettings):Unit`。
 - Produces `ScheduleCodec.encode(schedule:CardSchedule):String`、`decode(json:String):CardSchedule`，使用应用 schema，非第三方库 JSON。
 
-- [ ] **Step 1:** 写真实 Room Robolectric 测试：创建卡后 NEW 状态与内容一起保存；编辑保留 schedule/review logs；删除牌组级联删除 cards/schedules/logs；同名牌组允许；字段长度拒绝不写入；保存英文、emoji、多行文字后读取完全相等。
+- [x] **Step 1:** 写真实 Room Robolectric 测试：创建卡后 NEW 状态与内容一起保存；编辑保留 schedule/review logs；删除牌组级联删除 cards/schedules/logs；同名牌组允许；字段长度拒绝不写入；保存英文、emoji、多行文字后读取完全相等。
 
 ```kotlin
 assertEquals(originalSchedule, repository.candidates(deck.id).single().schedule)
@@ -151,9 +151,9 @@ assertEquals("line one\nline two 😀", repository.candidates(deck.id).single().
 assertTrue(repository.candidates(deletedDeck.id).isEmpty())
 ```
 
-- [ ] **Step 2:** 添加文件型数据库 close/reopen 持久化测试；默认 settings=20/SYSTEM/1；saveSettings(0) 和主题可持久化；ScheduleCodec 往返保持所有可空与非空字段。Run `./gradlew :app:testDebugUnitTest :core:test --console=plain`，确认缺失实现导致失败。
-- [ ] **Step 3:** 实现 Room entities/DAO、外键和索引、默认单行设置初始化、数据映射与仓库；新增 Card 与 CardSchedule 同事务；时间源为注入 Clock，ID 源为注入 UUID factory；导出 schema，不启用 destructive migration。
-- [ ] **Step 4:** 再运行上述测试，确认真实数据库约束、级联和重启测试通过；保持空数据库无示例数据。提交数据层和生成 schema。
+- [x] **Step 2:** 添加文件型数据库 close/reopen 持久化测试；默认 settings=20/SYSTEM/1；saveSettings(0) 和主题可持久化；ScheduleCodec 往返保持所有可空与非空字段。Run `./gradlew :app:testDebugUnitTest :core:test --console=plain`，确认缺失实现导致失败。
+- [x] **Step 3:** 实现 Room entities/DAO、外键和索引、默认单行设置初始化、数据映射与仓库；新增 Card 与 CardSchedule 同事务；时间源为注入 Clock，ID 源为注入 UUID factory；导出 schema，不启用 destructive migration。
+- [x] **Step 4:** 再运行上述测试，确认真实数据库约束、级联和重启测试通过；保持空数据库无示例数据。提交数据层和生成 schema。
 
 ### Task 4: 原子评分、幂等、撤销和冲突处理
 
@@ -166,8 +166,8 @@ assertTrue(repository.candidates(deletedDeck.id).isEmpty())
 - Produces `GradeCommand(operationId:String,sessionId:String,cardId:String,expectedRevision:Long,rating:Rating,durationMs:Long)`。
 - Produces suspend `ReviewService.grade(command:GradeCommand):GradeResult`，Recorded(log)/Duplicate(log)/MissingCard/StaleSchedule/QuotaReached/InvalidCommand；`undo(sessionId:String,logId:String):UndoResult`，Restored(schedule)/Unavailable。
 
-- [ ] **Step 1:** 写测试：首次评分 firstReviewedAt 更新；同 operationId 重试只有一条日志与一次 revision 更新；重复 ID 但 command 内容不同必须拒绝，不能返回另一张卡的日志；过期 revision、已删除卡、额度已经耗尽均无写入。断言 repeated rating 不重复消耗新卡额度。
-- [ ] **Step 2:** 写原子性测试：在测试 SQLite 中用 trigger 拒绝 log insert，断言异常后 schedule 与 firstReviewedAt 未改变。撤销恢复完整 before 状态但 revision 单调递增、首次额度返还、undoneAt 非空；错误 session、已被修改状态和二次撤销均拒绝。
+- [x] **Step 1:** 写测试：首次评分 firstReviewedAt 更新；同 operationId 重试只有一条日志与一次 revision 更新；重复 ID 但 command 内容不同必须拒绝，不能返回另一张卡的日志；过期 revision、已删除卡、额度已经耗尽均无写入。断言 repeated rating 不重复消耗新卡额度。
+- [x] **Step 2:** 写原子性测试：在测试 SQLite 中用 trigger 拒绝 log insert，断言异常后 schedule 与 firstReviewedAt 未改变。撤销恢复完整 before 状态但 revision 单调递增、首次额度返还、undoneAt 非空；错误 session、已被修改状态和二次撤销均拒绝。
 
 ```kotlin
 assertEquals(1, repository.observeLogs().first().size) // 同操作重试后
@@ -176,8 +176,8 @@ assertNull(restored.firstReviewedAt) // 撤销首次评分后
 assertTrue(restored.revision > after.revision)
 ```
 
-- [ ] **Step 3:** Run `./gradlew :app:testDebugUnitTest --tests '*ReviewServiceTest' --console=plain` 验证失败；实现 Room withTransaction。先查 operationId 验证幂等，再检查卡片/revision/额度，使用实际点击 Clock 时间评分；撤销检查最新有效记录和 after revision。
-- [ ] **Step 4:** 再运行同测试及数据层回归；所有有效测试通过后提交。不要添加生产环境故障注入后门，SQLite trigger 仅存在于测试数据库。
+- [x] **Step 3:** Run `./gradlew :app:testDebugUnitTest --tests '*ReviewServiceTest' --console=plain` 验证失败；实现 Room withTransaction。先查 operationId 验证幂等，再检查卡片/revision/额度，使用实际点击 Clock 时间评分；撤销检查最新有效记录和 after revision。
+- [x] **Step 4:** 再运行同测试及数据层回归；所有有效测试通过后提交。不要添加生产环境故障注入后门，SQLite trigger 仅存在于测试数据库。
 
 ### Task 5: 备份格式、验证和原子恢复
 
@@ -191,8 +191,8 @@ assertTrue(restored.revision > after.revision)
 - Produces `BackupCodec.encode(document:BackupDocument):String`、`decode(json:String):BackupDocument`；`BackupValidator.validate(document:BackupDocument):Unit`。
 - Produces suspend `BackupService.export():BackupDocument`、`prepare(input:InputStream):PreparedBackup`、`replace(prepared:PreparedBackup):Unit`；PreparedBackup 含已验证 document 及 count summary。`BackupFileGateway.write(uri:Uri,document:BackupDocument):Unit` 与 `read(uri:Uri):InputStream` 封装 ContentResolver。
 
-- [ ] **Step 1:** 写失败测试：导出/恢复保留 IDs、dueAt、firstReviewedAt、revision、有效/撤销日志和 settings；未来 schema、重复 ID、失效外键、NaN/Infinity、越界时间/用时/参数、NEW 状态不一致、过长字段拒绝。
-- [ ] **Step 2:** 覆盖 Review Focus：log.cardId/deckId 与前后快照不一致必须拒绝；非 NEW 必须有合法记忆参数；卡片必须恰好对应一个 schedule；UTF-8 输入超过 50*1024*1024 字节拒绝；中途 IOException 不调用 replace、原数据不变。测试 replace 发生异常时事务回滚。
+- [x] **Step 1:** 写失败测试：导出/恢复保留 IDs、dueAt、firstReviewedAt、revision、有效/撤销日志和 settings；未来 schema、重复 ID、失效外键、NaN/Infinity、越界时间/用时/参数、NEW 状态不一致、过长字段拒绝。
+- [x] **Step 2:** 覆盖 Review Focus：log.cardId/deckId 与前后快照不一致必须拒绝；非 NEW 必须有合法记忆参数；卡片必须恰好对应一个 schedule；UTF-8 输入超过 50*1024*1024 字节拒绝；中途 IOException 不调用 replace、原数据不变。测试 replace 发生异常时事务回滚。
 
 ```kotlin
 assertEquals(before.cards, restoredBackup.cards)
@@ -202,8 +202,8 @@ assertEquals(before.settings, restoredBackup.settings)
 assertEquals(before, service.export()) // 固定 Clock 下，失败恢复后原库不变
 ```
 
-- [ ] **Step 3:** Run `./gradlew :core:test :app:testDebugUnitTest --console=plain` 验证失败；实现固定 schema JSON（拒绝 unknown keys 与特殊浮点值），验证业务关系，流式读取有界输入，事务一致快照导出及全量替换；不得边读文件边删除数据库。
-- [ ] **Step 4:** 再运行相同测试，通过后提交；SAF UI 确认与取消在 Task 7 实现，BackupService 不能自行跳过用户确认。
+- [x] **Step 3:** Run `./gradlew :core:test :app:testDebugUnitTest --console=plain` 验证失败；实现固定 schema JSON（拒绝 unknown keys 与特殊浮点值），验证业务关系，流式读取有界输入，事务一致快照导出及全量替换；不得边读文件边删除数据库。
+- [x] **Step 4:** 再运行相同测试，通过后提交；SAF UI 确认与取消在 Task 7 实现，BackupService 不能自行跳过用户确认。
 
 ### Task 6: 统计、会话状态与 ViewModel
 
@@ -219,7 +219,7 @@ assertEquals(before, service.export()) // 固定 Clock 下，失败恢复后原�
 - Produces `ReviewViewModel.state:StateFlow<ReviewUiState>`、`start(deckId:String?):Unit`、`reveal():Unit`、`grade(rating:Rating):Unit`、`undo():Unit`、`setForeground(active:Boolean):Unit`、`finish():Unit`。ReviewUiState=Loading/Question/Answer/Submitting/Complete/Failure，保存快照与 sessionId。
 - Produces `SettingsViewModel.state:StateFlow<SettingsUiState>`、`prepareRestore(uri:Uri):Unit`、`confirmRestore():Unit`、`cancelRestore():Unit`、`export(uri:Uri):Unit`；恢复成功事件通知当前 ReviewViewModel.finish()。
 
-- [ ] **Step 1:** 写统计/用时测试：0 记录无 NaN；四次评分两张卡 scoreCount=4/distinct=2；AGAIN 1 次 ratio=0.25；撤销记录不计；7 日含今天；前台 2 秒、后台 10 秒、前台 3 秒，elapsed=5,000 ms；墙钟倒退不影响单调用时。
+- [x] **Step 1:** 写统计/用时测试：0 记录无 NaN；四次评分两张卡 scoreCount=4/distinct=2；AGAIN 1 次 ratio=0.25；撤销记录不计；7 日含今天；前台 2 秒、后台 10 秒、前台 3 秒，elapsed=5,000 ms；墙钟倒退不影响单调用时。
 
 ```kotlin
 assertEquals(4, summary.today.scoreCount)
@@ -228,10 +228,10 @@ assertEquals(0.25, summary.today.againRatio!!, 0.0)
 assertEquals(5_000L, timer.elapsedMs(15_000L))
 ```
 
-- [ ] **Step 2:** 写 ViewModel 测试：未 reveal 禁止 grade；重复 grade 无重复提交；rotation/SavedStateHandle 保留当前问题/答案；grade 错误保留答案可重试；stale/missing 刷新队列；undo 后显示正面，第二次 undo unavailable；finish 不写未评分记录。
-- [ ] **Step 3:** 补 editor 必填与重复保存测试；设置保存上限/主题；取消恢复无写入，确认恢复成功终止旧会话，旧答案无法再次提交；onResume 刷新时区、额度与预览。Run core/app tests 验证失败。
-- [ ] **Step 4:** 实现手动 AppContainer DI，ViewModel 通过 repository/service 而非 UI 直接 DAO；StateFlow 驱动展示。统计使用本地日区间、保存后刷新、前台每分钟刷新到期数；后台停止刷新，不建后台常驻服务。
-- [ ] **Step 5:** 再运行 `./gradlew :core:test :app:testDebugUnitTest --console=plain` 并确认上述测试执行；提交统计与状态层。
+- [x] **Step 2:** 写 ViewModel 测试：未 reveal 禁止 grade；重复 grade 无重复提交；rotation/SavedStateHandle 保留当前问题/答案；grade 错误保留答案可重试；stale/missing 刷新队列；undo 后显示正面，第二次 undo unavailable；finish 不写未评分记录。
+- [x] **Step 3:** 补 editor 必填与重复保存测试；设置保存上限/主题；取消恢复无写入，确认恢复成功终止旧会话，旧答案无法再次提交；onResume 刷新时区、额度与预览。Run core/app tests 验证失败。
+- [x] **Step 4:** 实现手动 AppContainer DI，ViewModel 通过 repository/service 而非 UI 直接 DAO；StateFlow 驱动展示。统计使用本地日区间、保存后刷新、前台每分钟刷新到期数；后台停止刷新，不建后台常驻服务。
+- [x] **Step 5:** 再运行 `./gradlew :core:test :app:testDebugUnitTest --console=plain` 并确认上述测试执行；提交统计与状态层。
 
 ### Task 7: 精美 Compose 界面与完整交互
 
@@ -243,7 +243,7 @@ assertEquals(5_000L, timer.elapsedMs(15_000L))
 
 **Interfaces:** Consumes Task 6 StateFlow/events；Produces 带可访问标签与稳定 testTag 的 Compose screens；navigation route=Today/Decks/DeckDetail(deckId)/Editor(deckId,cardId?)/Review(deckId?)/Statistics/Settings。复习关键 tags=`card-front/card-back/reveal-answer/rating-again/rating-hard/rating-good/rating-easy/undo-rating`。
 
-- [ ] **Step 1:** 写 Compose 行为测试：初始空页面→创建牌组→制卡→进入复习；正面阶段无答案/评分，reveal 后有四档标签与间隔；grade 后完成，退出/再入后 due 不被重置。设备执行条件成立时运行测试确认缺失 UI 失败；没有设备则保留测试并标记 unrun，不伪造红绿记录。
+- [x] **Step 1:** 写 Compose 行为测试：初始空页面→创建牌组→制卡→进入复习；正面阶段无答案/评分，reveal 后有四档标签与间隔；grade 后完成，退出/再入后 due 不被重置。设备执行条件成立时运行测试确认缺失 UI 失败；没有设备则保留测试并标记 unrun，不伪造红绿记录。
 
 ```kotlin
 compose.onNodeWithTag("card-back").assertDoesNotExist()
@@ -253,11 +253,11 @@ compose.onNodeWithTag("card-back").assertIsDisplayed()
 compose.onNodeWithTag("rating-good").assertIsEnabled()
 ```
 
-- [ ] **Step 2:** 补未保存内容退出确认、字段错误保留输入、删除确认与取消、已显示答案后删除/恢复刷新测试；SAF 返回 null 为取消，无错误也无替换；恢复数量预览和二次确认；导出失败不显示成功提示。实现时使用可注入 FileGateway 做 UI 失败情境测试，真实文件 API 另行设备验证。
-- [ ] **Step 3:** 实现固定颜色/字体/间距 token、Material 3 主题、底栏和设置入口；今日、牌组、详情、制卡、复习、记录、设置完整流程。背面例句只在答案面；评分提交时禁用按钮；复习完成保留最近评分撤销入口。
-- [ ] **Step 4:** 实现中文反馈、空/加载/错误/完成状态；theme SYSTEM/LIGHT/DARK；SAF CreateDocument/OpenDocument 与替换确认；不申请联网或存储权限。删除牌组提示“将删除全部卡片和学习记录”，错误反馈不显示内部堆栈。
+- [x] **Step 2:** 补未保存内容退出确认、字段错误保留输入、删除确认与取消、已显示答案后删除/恢复刷新测试；SAF 返回 null 为取消，无错误也无替换；恢复数量预览和二次确认；导出失败不显示成功提示。实现时使用可注入 FileGateway 做 UI 失败情境测试，真实文件 API 另行设备验证。
+- [x] **Step 3:** 实现固定颜色/字体/间距 token、Material 3 主题、底栏和设置入口；今日、牌组、详情、制卡、复习、记录、设置完整流程。背面例句只在答案面；评分提交时禁用按钮；复习完成保留最近评分撤销入口。
+- [x] **Step 4:** 实现中文反馈、空/加载/错误/完成状态；theme SYSTEM/LIGHT/DARK；SAF CreateDocument/OpenDocument 与替换确认；不申请联网或存储权限。删除牌组提示“将删除全部卡片和学习记录”，错误反馈不显示内部堆栈。
 - [ ] **Step 5:** 用实际渲染验证浅色/深色、最大字段长文本、字体缩放 1.5 和 2.0、320 dp 宽度、软键盘避让；检查正文对比度>=4.5:1、点击区>=48 dp、TalkBack 标签；评分按钮宽度不足改两列，动画 180～240 ms 并尊重系统动画设置。
-- [ ] **Step 6:** Run `./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:connectedDebugAndroidTest --console=plain`（connected 仅设备已就绪时）；截图存 `artifacts/screenshots/`，与正式设计逐项对照修正；提交 UI 和 tests，不提交截图缓存或 APK。
+- [x] **Step 6:** Run `./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:connectedDebugAndroidTest --console=plain`（connected 仅设备已就绪时）；截图存 `artifacts/screenshots/`，与正式设计逐项对照修正；提交 UI 和 tests，不提交截图缓存或 APK。
 
 ### Task 8: 最终验证、APK 交付和使用说明
 
@@ -267,11 +267,11 @@ compose.onNodeWithTag("rating-good").assertIsEnabled()
 
 **Interfaces:** Consumes 完整项目；Produces 可重复的构建验证命令、实际 APK 与透明的执行结果；不新增产品功能。
 
-- [ ] **Step 1:** 完善 README：工具激活、首次安装、新卡上限、四档评分、撤销范围、漏学后复习、备份/全量替换、重新构建；列出 MIT FSRS、AndroidX 等实际依赖许可，保留适用声明。
-- [ ] **Step 2:** scripts/verify.sh 激活项目环境后执行 `./gradlew :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --console=plain`；保存当前运行报告并保持底层退出码，检查测试数量，区分失败/跳过/未运行。一次通过后仅因新变更或未解决问题重复测试。
-- [ ] **Step 3:** 在可用设备上执行 connected tests；安装 APK→创建内容→评分→force-stop→重启核对持久化→导出→修改→恢复→核对 due/历史/settings；保存设备型号/API 与当前测试时间。除 API 35 主验证外，在 API 26 系统镜像可用时重复 FSRS 兼容与学习流程测试；任一目标未执行分别记录。软件模拟器始终失败时记录已尝试诊断与未运行项，提供真机检查步骤，不宣称设备就绪。
-- [ ] **Step 4:** 使用 build-tools 36.0.0 的 apksigner verify 和 aapt dump badging/permissions 检查 debug APK 的包名、API 26、签名及权限；复制实际构建产物至 artifacts/xunji-0.1.0-debug.apk，生成 SHA-256，明确是 debug 签名，不是商店发布版本。
-- [ ] **Step 5:** 完成代码审阅与问题修正，必要时只重跑受影响检查；写 verification-report 记录实际通过、失败和未执行项，尤其 Java-FSRS Android 运行结果及 UI 截图。检查 git diff、只提交 xunji 范围源码与文档，保持既有 tools/docs/research 文件不变。
+- [x] **Step 1:** 完善 README：工具激活、首次安装、新卡上限、四档评分、撤销范围、漏学后复习、备份/全量替换、重新构建；列出 MIT FSRS、AndroidX 等实际依赖许可，保留适用声明。
+- [x] **Step 2:** scripts/verify.sh 激活项目环境后执行 `./gradlew :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --console=plain`；保存当前运行报告并保持底层退出码，检查测试数量，区分失败/跳过/未运行。一次通过后仅因新变更或未解决问题重复测试。
+- [x] **Step 3:** 在可用设备上执行 connected tests；安装 APK→创建内容→评分→force-stop→重启核对持久化→导出→修改→恢复→核对 due/历史/settings；保存设备型号/API 与当前测试时间。除 API 35 主验证外，在 API 26 系统镜像可用时重复 FSRS 兼容与学习流程测试；任一目标未执行分别记录。软件模拟器始终失败时记录已尝试诊断与未运行项，提供真机检查步骤，不宣称设备就绪。
+- [x] **Step 4:** 使用 build-tools 36.0.0 的 apksigner verify 和 aapt dump badging/permissions 检查 debug APK 的包名、API 26、签名及权限；复制实际构建产物至 artifacts/xunji-0.1.0-debug.apk，生成 SHA-256，明确是 debug 签名，不是商店发布版本。
+- [x] **Step 5:** 完成代码审阅与问题修正，必要时只重跑受影响检查；写 verification-report 记录实际通过、失败和未执行项，尤其 Java-FSRS Android 运行结果及 UI 截图。检查 git diff、只提交 xunji 范围源码与文档，保持既有 tools/docs/research 文件不变。
 
 ## 执行与审阅建议
 
@@ -302,3 +302,7 @@ compose.onNodeWithTag("rating-good").assertIsEnabled()
 - https://dl.google.com/dl/android/maven2/com/android/tools/build/gradle/8.13.2/gradle-8.13.2.pom
 - https://dl.google.com/dl/android/maven2/androidx/compose/compose-bom/2025.09.01/compose-bom-2025.09.01.pom
 - https://repo.maven.apache.org/maven2/io/github/open-spaced-repetition/fsrs/1.0.0/fsrs-1.0.0.pom
+
+## 最终执行状态（2026-10-10）
+
+Tasks 1～8 已完成实现、必要诊断和交付验证：core 35/app 35、API 26 设备 7 项全部通过。Task 1 Step 5 的 API 35 运行、Task 7 Step 5 的 TalkBack 人工验证仍未完成，因此保留未勾选；真实字体/窄屏/长文本/软键盘/标签与对比度已验证。未执行项不作通过声明，详情见验证报告。

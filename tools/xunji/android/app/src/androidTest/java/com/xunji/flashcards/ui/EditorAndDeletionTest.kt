@@ -13,6 +13,7 @@ class EditorAndDeletionTest {
   compose.waitUntil(10000) { compose.onAllNodesWithText("测试牌组").fetchSemanticsNodes().isNotEmpty() }
   compose.onNodeWithText("测试牌组").performClick();compose.onNodeWithTag("add-card").performClick()
   compose.onNodeWithTag("editor-front").performTextInput("hello");compose.onNodeWithTag("save-card").performClick()
+  compose.waitUntil(10000) {compose.onNodeWithText("请填写此项").isDisplayed()}
   compose.onNodeWithText("请填写此项").assertIsDisplayed();compose.onNodeWithTag("editor-front").assertTextContains("hello")
   compose.onNodeWithTag("editor-exit").performClick();compose.onNodeWithText("继续编辑").performClick()
   compose.onNodeWithTag("editor-front").assertTextContains("hello")

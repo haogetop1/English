@@ -6,7 +6,8 @@ import com.xunji.core.scheduling.FsrsScheduler
 import com.xunji.flashcards.backup.*
 import java.io.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.*
+import com.xunji.flashcards.data.StudyRepository
 import org.junit.Test
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -29,5 +30,15 @@ class SettingsViewModelTest:UiTestBase() {
   val v=SettingsViewModel(repo,BackupService(db,clock),gateway) {}
   v.saveSettings(AppSettings(0,ThemeMode.DARK));withTimeout(5000) { repo.observeSettings().first { it.newCardsPerDay==0 } }
   v.export(Uri.parse("content://test/file"));withTimeout(5000) { v.state.first { it.error!=null } };assertNull(v.state.value.message)
+ }
+ @Test fun settingsObservationFailureIsRecoverableWithoutUncaughtException()=runBlocking {
+  var fail=true
+  val repository=object:StudyRepository by repo { override fun observeSettings()=flow {if(fail)throw IOException("database open failed");emit(AppSettings(4,ThemeMode.DARK))} }
+  val gateway=object:FileGateway {override suspend fun read(uri:Uri):InputStream=throw IOException();override suspend fun write(uri:Uri,document:BackupDocument) {}}
+  val v=SettingsViewModel(repository,BackupService(db,clock),gateway) {}
+  withTimeout(5000) {v.state.first {it.initializationError!=null}}
+  fail=false;v.retryObservation()
+  val recovered=withTimeout(5000) {v.state.first {it.settings.newCardsPerDay==4}}
+  assertNull(recovered.initializationError)
  }
 }

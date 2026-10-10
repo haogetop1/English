@@ -7,7 +7,7 @@
 | 项目 | 结果 |
 | --- | --- |
 | core 单元测试 | 35/35 通过；调度、队列、时区额度、校验、备份、统计、前台计时 |
-| app 单元测试 | 29/29 通过；真实 Room 持久化、评分幂等、SQLite 故障回滚、撤销、恢复与 ViewModel |
+| app 单元测试 | 35/35 通过；真实 Room 持久化、评分幂等、SQLite 故障回滚、撤销、恢复与 ViewModel，含六项审查回归 |
 | Android lint | 0 错误，1 条兼容性提示：API 26 应显式声明 fullBackupContent；allowBackup=false 已禁用备份 |
 | debug 与 androidTest APK 构建 | 通过 |
 | APK 签名 | apksigner 验证通过，v2，Android Debug 证书 |
@@ -15,9 +15,9 @@
 | 权限 | 无 INTERNET / READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE / MANAGE_EXTERNAL_STORAGE；仅 AndroidX 自有动态接收器权限 |
 | 工具链安装重复运行 | 通过，javac 21.0.12.1；依赖与缓存留在 xunji |
 | API 26 FSRS 运行 | AndroidJUnitRunner 真实设备测试 1/1 通过，Java record / java.time / 四档算法依赖可运行 |
-| API 26 Compose 设备测试 | 最终完整执行 5/5 通过；包含实际旋转保留答案、备份预览取消与确认、导出失败不报成功；首轮的 exportedAt 动态时间断言已修正 |
+| API 26 Compose 设备测试 | 最终完整执行 7/7 通过，225.081 秒；含动画时钟答案隔离、真实旋转、可见错误反馈与数据库故障重试导航 |
 | API 35 | 软件模拟器 system_server 在慢启动中反复退出，未完成启动；后续探测端口关闭。设备验证未执行 |
-| 独立整体审阅 | 待执行 |
+| 独立整体审阅 | 一次独立整体审阅已完成：4 项 Important 均修复并通过失败→通过回归；完整主机 70/70 与设备 7/7 通过，无未处理 Important |
 
 ## 设备与渲染
 
@@ -29,11 +29,16 @@ API 26 AOSP x86_64 模拟器，480×800 / 160 dpi；通过项目内直接 ADB �
 
 正文颜色与背景按 sRGB 对比度计算，已验证关键配对 6.00～14.63:1，超过 4.5:1 目标；图标与关键按钮区域至少 48 dp。长文本在卡片内滚动，大字体和窄屏评分改为两列。
 
+软件模拟器出现过一次 System UI 无响应提示，选择等待后恢复；未将其认作应用通过或失败证据。
+
+## 系统文件与进程恢复
+
+最终 APK 再次 force-stop 后重开，实测快照 `device-db/final-after-restart.json` 通过；之前的备份验收通过 SQLite 与今日页面确认保留 REVIEW、revision 3、原 dueAt、两条评分记录（其中一条撤销）与已学习数量。实际 Android DocumentsUI 导出 JSON，修改每日额度 20→0；恢复预览取消后数据库仍为 0，重新选择并确认替换后恢复为 20/SYSTEM。恢复前后逐项比较牌组、卡片 ID、调度和完整评分快照，一致。证据见 `artifacts/test-results/manual-saf-backup.json` 与 `device-db/{before-saf,after-cancel,after-restore}.json`。
+
 ## 尚未验证
 
 - API 35 上的运行与交互。
 - 物理真机、TalkBack 人工朗读、OEM 文件提供器行为。
-- 系统文件选择器的真实导出/恢复及进程 force-stop 后 UI 重开，后续人工检查结果待更新。
 - 配置发布后的新任务恢复。安装和启动脚本草稿已保存，尚未发布。
 
 如未补足这些项目，应按 [真机步骤](device-checklist.md) 检查，不将 JVM/构建成功替代它们。
@@ -41,6 +46,8 @@ API 26 AOSP x86_64 模拟器，480×800 / 160 dpi；通过项目内直接 ADB �
 ## 产物与原始证据
 
 `bash scripts/verify.sh` 同时保存实际 JUnit XML、lint HTML/XML、签名、包信息与权限输出；路径 `artifacts/test-results/`。APK：`artifacts/xunji-0.1.0-debug.apk`，摘要文件 `artifacts/xunji-0.1.0-debug.apk.sha256`。生成物未提交 Git。
+
+独立审查与决定说明见 [修复记录](review-and-decisions.md)。
 
 核心与数据库测试均先在缺失实现上观察断言失败，再实现并通过；数据库回滚使用测试 SQLite trigger，没有生产故障后门。被撤销记录、非法备份关系、超限输入和读写异常均有独立验证。
 

@@ -11,7 +11,20 @@ import kotlinx.coroutines.flow.*
 class SettingsViewModel(private val repo:StudyRepository,private val backup:BackupService,private val files:FileGateway,private val restored:()->Unit):ViewModel() {
     private val mutable=MutableStateFlow(SettingsUiState())
     val state:StateFlow<SettingsUiState> = mutable.asStateFlow()
-    init { viewModelScope.launch { repo.observeSettings().collect { settings->mutable.value=mutable.value.copy(settings=settings) } } }
+    private var observation:Job?=null
+    private var observationVersion=0L
+    init { retryObservation() }
+    fun retryObservation() {
+        val version=++observationVersion
+        observation?.cancel()
+        mutable.value=mutable.value.copy(initializationError=null)
+        observation=viewModelScope.launch {
+            try { repo.observeSettings().collect { settings->if(version==observationVersion)mutable.value=mutable.value.copy(settings=settings,initializationError=null) } }
+            catch(e:CancellationException) { throw e } catch(_:Exception) {
+                if(version==observationVersion)mutable.value=mutable.value.copy(initializationError="无法读取学习设置，请重试；已有数据会保留")
+            }
+        }
+    }
     private fun operation(block:suspend ()->Unit) {
         if(mutable.value.busy)return
         mutable.value=mutable.value.copy(busy=true,message=null,error=null)

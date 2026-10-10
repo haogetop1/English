@@ -39,6 +39,8 @@ import com.xunji.flashcards.ui.components.*
     val candidate=answer?.candidate ?: (state as ReviewUiState.Question).candidate
     Column(Modifier.fillMaxSize().padding(22.dp,12.dp,22.dp,18.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
      FlowRow(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(18.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) { Eyebrow(candidate.deckName);Eyebrow(if(answer==null)"先回忆，再揭晓" else "按真实感受评分") }
+     // A new card owns new animation and scroll state; outgoing content cannot read its answer.
+     key(candidate.card.id) {
      Surface(Modifier.weight(1f).fillMaxWidth(),shape=RoundedCornerShape(28.dp),color=MaterialTheme.colorScheme.surface,border=BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant)) {
       Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(26.dp),verticalArrangement=Arrangement.spacedBy(20.dp)) {
        Eyebrow("QUESTION · 正面")
@@ -51,6 +53,7 @@ import com.xunji.flashcards.ui.components.*
         }
        }
       }
+     }
      }
      if(answer==null)PrimaryButton("显示答案",onReveal,tag="reveal-answer")
      else {

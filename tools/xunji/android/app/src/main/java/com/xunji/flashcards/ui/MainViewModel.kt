@@ -15,8 +15,15 @@ class MainViewModel(private val repo:StudyRepository,private val clock:Clock=Clo
     private val mutable=MutableStateFlow(MainUiState())
     val state:StateFlow<MainUiState> = mutable.asStateFlow()
     private val moment=MutableStateFlow(clock.instant() to ZoneId.systemDefault())
-    init {
-        viewModelScope.launch {
+    private var observation:Job?=null
+    private var observationVersion=0L
+    init { retryObservation() }
+    fun retryObservation() {
+        val version=++observationVersion
+        observation?.cancel()
+        mutable.value=mutable.value.copy(loading=true,error=null)
+        observation=viewModelScope.launch {
+          try {
             combine(repo.observeDecks(),repo.observeAllCards(),repo.observeLogs(),repo.observeSettings(),moment) { decks,cards,logs,settings,time ->
                 val(at,zone)=time
                 val day=LocalDay.bounds(at,zone)
@@ -24,7 +31,10 @@ class MainViewModel(private val repo:StudyRepository,private val clock:Clock=Clo
                 val remaining=NewCardQuota.remaining(cards.map { it.schedule },settings,at,zone)
                 fun due(c:CardCandidate)=c.schedule.phase!=Phase.NEW && c.schedule.dueAt<=at.toEpochMilli()
                 MainUiState(loading=false,decks=decks.map { deck -> val subset=cards.filter { it.card.deckId==deck.id };DeckSummary(deck,subset.size,subset.count(::due),subset.count { it.schedule.phase==Phase.NEW }) },cards=cards,due=cards.count(::due),availableNew=minOf(remaining,cards.count { it.schedule.phase==Phase.NEW }),learnedNew=learned,statistics=StudyStatistics.summarize(logs,at,zone),settings=settings)
-            }.catch { emit(MainUiState(loading=false,error="无法读取数据，请重启应用后重试")) }.collect { mutable.value=it }
+            }.collect { if(version==observationVersion)mutable.value=it }
+          } catch(e:CancellationException) { throw e } catch(_:Exception) {
+            if(version==observationVersion)mutable.value=mutable.value.copy(loading=false,error="无法读取数据，请重试；已有数据会保留")
+          }
         }
     }
     fun refresh(at:Instant=clock.instant(),zone:ZoneId=ZoneId.systemDefault()) { moment.value=at to zone }

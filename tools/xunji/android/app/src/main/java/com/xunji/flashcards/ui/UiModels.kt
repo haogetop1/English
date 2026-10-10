@@ -14,4 +14,4 @@ sealed interface ReviewUiState {
  data class Complete(val nextDueAt:Long?,val scoreCount:Int,val distinctCards:Int,val durationMs:Long):ReviewUiState
  data class Failure(val message:String):ReviewUiState
 }
-data class SettingsUiState(val settings:AppSettings=AppSettings(),val busy:Boolean=false,val prepared:PreparedBackup?=null,val message:String?=null,val error:String?=null)
+data class SettingsUiState(val settings:AppSettings=AppSettings(),val initializationError:String?=null,val busy:Boolean=false,val prepared:PreparedBackup?=null,val message:String?=null,val error:String?=null)
