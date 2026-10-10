@@ -10,4 +10,5 @@ license_status=${PIPESTATUS[1]}
 set -o pipefail
 if [[ "$license_status" != 0 ]]; then tail -n 30 "$license_log"; exit "$license_status"; fi
 sdkmanager --sdk_root="$ANDROID_HOME" 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
+python3 -m pip install --disable-pip-version-check --cache-dir "$TASK_ROOT/.cache/pip" --target "$TASK_ROOT/.toolchain/python" 'adb-shell==0.4.4'
 javac -version

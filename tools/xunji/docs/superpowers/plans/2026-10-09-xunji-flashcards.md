@@ -279,7 +279,7 @@ compose.onNodeWithTag("rating-good").assertIsEnabled()
 
 用户也可以选择 Subagent-driven：逐任务派发实现与审阅，再做整体审阅；并行仅适用于已明确接口且不共享修改的工作。当前未派发任何子代理。
 
-正式设计已经确认。实现前仍需用户审阅本文并选择执行方式；没有回复不视为确认。计划保存或本地提交不表示工具链安装、测试或 APK 构建已执行。
+正式设计和本文实施计划已经由用户确认，用户选择 Native，由当前代理直接执行。实际构建、测试和设备检查记录见 docs/testing/verification-report.md。
 
 ## 计划自查映射
 
